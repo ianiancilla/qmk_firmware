@@ -32,6 +32,7 @@
 #ifdef TAP_DANCE_ENABLE
 #    define TAPPING_TERM 175
 #    define TAPPING_TERM_PER_KEY
+#    define TAPPING_TOGGLE 2
 #endif
 
 #ifdef RGBLIGHT_ENABLE
