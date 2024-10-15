@@ -1,0 +1,32 @@
+            ssvg.keymap {
+                font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+                font-size: 14px;
+                font-kerning: normal;
+                text-rendering: optimizeLegibility;
+                fill: #000000;
+            }
+
+	    /* default key styling */
+            rect.key {
+                fill: #ffffff;
+            }
+
+            rect.key, rect.combo {
+                stroke: #000000;
+                stroke-width: 1.5;
+            }
+
+	    /* color accent for combo boxes */
+            rect.combo, rect.combo-separate {
+                fill: #befac1;
+            }
+
+            /* color accent for held keys */
+            rect.held, rect.combo.held {
+                fill: #5bcf61;
+            }
+
+            /* lighter symbol for transparent keys */
+            text.trans {
+                fill: #919191;
+            }

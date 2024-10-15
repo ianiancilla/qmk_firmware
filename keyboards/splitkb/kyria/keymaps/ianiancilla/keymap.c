@@ -24,6 +24,7 @@ enum layers {
     _SPECIAL,
     _NUM,
     _NAV,
+    _MOUSE,
 };
 
 
@@ -32,6 +33,8 @@ enum layers {
 #define SPEC     MO(_SPECIAL)
 #define NUM      MO(_NUM)
 #define NAV      MO(_NAV)
+#define MOU      MO(_MOUSE)
+
 
 
 // ************* MACROS *************
@@ -46,7 +49,7 @@ enum custom_keycodes {
     M_ETH, //ð
     M_NTILDE, //ñ
     M_CHARAMAP, //opens character map
-    //M_TM //TM symbol
+    M_TM //TM symbol
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -114,7 +117,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case M_CHARAMAP:
             if (record->event.pressed) {
-                SEND_STRING(SS_TAP(X_LGUI) "character map" SS_TAP(KC_ENT));
+                //SEND_STRING(SS_TAP(X_LGUI) "character map" SS_TAP(KC_ENT));
+            }
+            break;
+
+        case M_TM:
+            if (record->event.pressed) {
+                SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_P0) SS_TAP(X_P1) SS_TAP(X_P5) SS_TAP(X_P3) SS_UP(X_LALT));
             }
             break;
     }
@@ -140,6 +149,8 @@ enum {
     SPEC_A,   // tap for à, hold for ä
     SPEC_U,  // tap for ù, hold for ü
     SPEC_O,  // tap for ò, hold for ö
+    Z_PRINT, // tap for z, hold for print
+    DEL_MOUSE, // tap for delete, hold to move to nav layer
 };
 
 // Function associated with all tap dances
@@ -171,6 +182,10 @@ void slash_hash(tap_dance_state_t *state, void *user_data) {
             break;
         case TD_SINGLE_HOLD:
             tap_code(DE_HASH);
+            break;
+        case TD_DOUBLE_TAP:
+            tap_code16(DE_SLSH);
+            tap_code16(DE_SLSH);
             break;
         default:
             break;
@@ -240,14 +255,16 @@ void caps_cw(tap_dance_state_t *state, void *user_data) {
 void special_a(tap_dance_state_t *state, void *user_data) {
     ql_tap_state.state = cur_dance(state);
     switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            tap_code16(M_AGRAVE)
+        case TD_SINGLE_TAP: // A GRAVE
+            tap_code16(DE_GRV);
+            tap_code16(KC_A);
             break;
-        case TD_SINGLE_HOLD:
-            tap_code16(DE_ADIA)
+        case TD_SINGLE_HOLD: // A UMLAUT
+            tap_code16(DE_ADIA);
             break;
-        case TD_DOUBLE_TAP:
-            tap_code16(M_AACUTE)
+        case TD_DOUBLE_TAP: // A ACUTE
+            tap_code16(DE_ACUT);
+            tap_code16(KC_A);
             break;
         default:
             break;
@@ -255,14 +272,15 @@ void special_a(tap_dance_state_t *state, void *user_data) {
 }
 
 // SPEC_U tap dance
-void special_a(tap_dance_state_t *state, void *user_data) {
+void special_u(tap_dance_state_t *state, void *user_data) {
     ql_tap_state.state = cur_dance(state);
     switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            tap_code16(M_UGRAVE)
-                break;
-        case TD_SINGLE_HOLD:
-            tap_code16(DE_UDIA)
+        case TD_SINGLE_TAP: // U GRAVE
+            tap_code16(DE_GRV);
+            tap_code16(KC_U);
+            break;
+        case TD_SINGLE_HOLD: // U UMLAUT
+            tap_code16(DE_UDIA);
                 break;
         default:
             break;
@@ -270,15 +288,31 @@ void special_a(tap_dance_state_t *state, void *user_data) {
 }
 
 // SPEC_O tap dance
-void special_a(tap_dance_state_t *state, void *user_data) {
+void special_o(tap_dance_state_t *state, void *user_data) {
     ql_tap_state.state = cur_dance(state);
     switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            tap_code16(M_OGRAVE)
+        case TD_SINGLE_TAP: // O GRAVE
+            tap_code16(DE_GRV);
+            tap_code16(KC_O);
+            break;
+        case TD_SINGLE_HOLD: // O UMLAUT
+            tap_code16(DE_ODIA);
                 break;
-        case TD_SINGLE_HOLD:
-            tap_code16(DE_ODIA)
-                break;
+        default:
+            break;
+    }
+}
+
+// Screenshot tap dance
+void z_print(tap_dance_state_t *state, void *user_data) {
+    ql_tap_state.state = cur_dance(state);
+    switch (ql_tap_state.state) {
+        case TD_SINGLE_TAP: // Z
+            tap_code16(DE_Z);
+            break;
+        case TD_SINGLE_HOLD: // print
+            tap_code16(KC_PSCR);
+            break;
         default:
             break;
     }
@@ -294,6 +328,7 @@ tap_dance_action_t tap_dance_actions[] = {
     [SPEC_A] = ACTION_TAP_DANCE_FN(special_a),
     [SPEC_U] = ACTION_TAP_DANCE_FN(special_u),
     [SPEC_O] = ACTION_TAP_DANCE_FN(special_o),
+    [Z_PRINT] = ACTION_TAP_DANCE_FN(z_print),
 };
 
 // Set a long-ish tapping term for tap-dance keys
@@ -319,6 +354,7 @@ enum combos {
     CB_ACUTE_E,
     CB_TM,
     CB_MUTE,
+    CB_SPACE,
 };
 
 
@@ -331,7 +367,7 @@ const uint16_t PROGMEM ominus_combo[] = {KC_O, DE_MINS, COMBO_END};
 const uint16_t PROGMEM hn_combo[] = {KC_H, KC_N, COMBO_END};
 const uint16_t PROGMEM tm_combo[] = {KC_T, KC_M, COMBO_END};
 const uint16_t PROGMEM wfp_combo[] = {KC_W, KC_F, KC_P, COMBO_END};
-
+const uint16_t PROGMEM cv_combo[]  = {KC_C, KC_V, COMBO_END};
 
 
 combo_t key_combos[] = {
@@ -342,8 +378,9 @@ combo_t key_combos[] = {
     [CB_HOME]    = COMBO(ln_combo, KC_HOME),
     [CB_END]     = COMBO(ominus_combo, KC_END),
     [CB_ACUTE_E] = COMBO(hn_combo, M_EACUTE),
-    //[CB_TM]      = COMBO(tm_combo, MO(_LAYER)),
-    [CB_MUTE] = COMBO(wfp_combo, KC_AUDIO_MUTE)
+    [CB_TM]      = COMBO(tm_combo, M_TM),
+    [CB_MUTE] = COMBO(wfp_combo, KC_AUDIO_MUTE),
+    [CB_SPACE] = COMBO(cv_combo, KC_SPC)
 };
 
 
@@ -359,16 +396,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
  * |  TAB   |   A  |   R  |   S  |   T  |   D  |                              |   H  |   N  |   E  |   I  |   O  |   ^ °  |
  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
- * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TO NUM|  DEL |   K  |   M  | , ;  | . :  | - _  | MO NUM |
+ * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TO NUM|TTMOUS|   K  |   M  | , ;  | . :  | - _  | MO NUM |
  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
  *                        | LAlt | LCtrl| Enter| tap /| MO   |  | RShft|Bckspc| Space| RCtrl|  =)  |
  *                        |      |      | LShft|hold #| SPEC |  |      |      |      |      | >.<  |
  *                        `----------------------------------'  `----------------------------------'
  */
     [_COLEMAK] = LAYOUT(
-     KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   KC_Y ,TD(CAPS_CW),TD(LOCK),
+     KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(CAPS_CW),TD(LOCK),
      KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                        KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
-     KC_LGUI , KC_Z ,  KC_X   ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TO(NUM), KC_DEL, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, MO(NUM),
+     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TO(NUM), TT(MOU), KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, MO(NUM),
                                  KC_LALT, KC_LCTL,SC_SENT,TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(EMOJI)
     ),
 
@@ -435,7 +472,26 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 
-
+ /*
+  * Mouse layer
+  *
+  * ,-------------------------------------------.                              ,-------------------------------------------.
+  * | TRAN   |      |      |      |      |      |                              |      |      |      |      |      |        |
+  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
+  * | TRAN   |      |RCLICK|MCLICK|LCLICK|      |                              |      |      |      |      |      |        |
+  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
+  * | TRAN   |      |      |      |      |      | TRAN | TRAN |  | TRAN | TRAN |      |      |      |      |      |        |
+  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
+  *                        | TRAN | TRAN | TRAN | TRAN | TRAN |  | TRAN | TRAN | TRAN | TRAN | TRAN |
+  *                        |      |      |      |      |      |  |      |      |      |      |      |
+  *                        `----------------------------------'  `----------------------------------'
+  */
+     [_MOUSE] = LAYOUT(
+       KC_TRNS, _______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______, _______,
+       KC_TRNS, _______, MS_BTN2, MS_BTN3, MS_BTN1, _______,                                     _______, _______, _______, _______, _______, _______,
+       KC_TRNS, _______, _______, _______, _______, _______, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, _______, _______, _______, _______, _______, _______,
+                                  KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+     ),
 
 // /*
 //  * Layer template
@@ -464,21 +520,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * For your convenience, here's a copy of those settings so that you can uncomment them if you wish to apply your own modifications.
  * DO NOT edit the rev1.c file; instead override the weakly defined default functions by your own.
  */
-
-
 #ifdef ENCODER_ENABLE
-bool encoder_update_user(uint8_t index, bool clockwise) {
-
-    if (index == 0)
+bool encoder_update_user(uint8_t index, bool clockwise)
+{
+    if (IS_LAYER_ON(_NAV)) // on NAV, scroll wheel
     {
-        // Volume control
-        if (clockwise) {
-            tap_code(KC_VOLU);
-        } else {
-            tap_code(KC_VOLD);
+        if (clockwise){
+          tap_code(KC_MS_WH_DOWN);
+        } else{
+          tap_code(KC_MS_WH_UP);
         }
-    } 
+    }
+    else
+    {
+        if (clockwise){
+          tap_code(KC_VOLU);
+        } else{
+          tap_code(KC_VOLD);
+        }
+    }
     return false;
-}
+};
 #endif
 
+// TODO
+// character map
+// increase mouse scroll speed
