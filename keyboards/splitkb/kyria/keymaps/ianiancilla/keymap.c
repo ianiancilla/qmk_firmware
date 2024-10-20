@@ -54,74 +54,74 @@ enum custom_keycodes {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case M_AGRAVE:
+        case M_AGRAVE: // à
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
                 tap_code16(KC_A);
             }
             break;
 
-        case M_AACUTE:
+        case M_AACUTE: // á (does not work shifted, will still give À)
             if (record->event.pressed) {
                 tap_code16(DE_ACUT);
                 tap_code16(KC_A);
             }
             break;
 
-        case M_EGRAVE:
+        case M_EGRAVE: // è
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
                 tap_code16(KC_E);
             }
             break;
 
-        case M_EACUTE:
+        case M_EACUTE: // é
             if (record->event.pressed) {
                 tap_code16(DE_ACUT);
                 tap_code16(KC_E);
             }
             break;
 
-        case M_IGRAVE:
+        case M_IGRAVE: // ì
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
                 tap_code16(KC_I);
             }
             break;
 
-        case M_OGRAVE:
+        case M_OGRAVE: // ò
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
                 tap_code16(KC_O);
             }
             break;
 
-        case M_UGRAVE:
+        case M_UGRAVE: // ù
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
                 tap_code16(KC_U);
             }
             break;
 
-        case M_ETH:
+        case M_ETH: // ð
             if (record->event.pressed) {
                 SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_P0) SS_TAP(X_P2) SS_TAP(X_P4) SS_TAP(X_P0) SS_UP(X_LALT));
             }
             break;
 
-        case M_NTILDE:
+        case M_NTILDE: // ñ
             if (record->event.pressed) {
                 SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_P0) SS_TAP(X_P2) SS_TAP(X_P4) SS_TAP(X_P1) SS_UP(X_LALT));
             }
             break;
 
-        case M_CHARAMAP:
+        case M_CHARAMAP: // opens character map app
             if (record->event.pressed) {
                 //SEND_STRING(SS_TAP(X_LGUI) "character map" SS_TAP(KC_ENT));
             }
             break;
 
-        case M_TM:
+        case M_TM: // ™
             if (record->event.pressed) {
                 SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_P0) SS_TAP(X_P1) SS_TAP(X_P5) SS_TAP(X_P3) SS_UP(X_LALT));
             }
@@ -556,4 +556,5 @@ bool encoder_update_user(uint8_t index, bool clockwise)
 // - fix tap dances
 // - mouse scroll
 // - leader key behaviour
+// - charamap macro
 //
