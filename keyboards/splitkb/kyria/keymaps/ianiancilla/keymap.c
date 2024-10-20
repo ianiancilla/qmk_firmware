@@ -348,16 +348,16 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
 #ifndef COMBOS
 
 enum combos {
-    CB_COLEMAK,
-    CB_BKSPACE,
-    CB_APOSTROPHE,
-    CB_DEL,
-    CB_HOME,
-    CB_END,
-    CB_ACUTE_E,
-    CB_TM,
-    CB_MUTE,
-    CB_SPACE,
+    CB_COLEMAK, // return to Colemak layer with TO
+    CB_BKSPACE, // types backspace
+    CB_APOSTROPHE, // '
+    CB_DEL, // types delete
+    CB_HOME, // presses HOME key
+    CB_END, // presses END key
+    CB_ACUTE_E, // types é
+    CB_TM, // types ™
+    CB_MUTE, // mutes audio
+    CB_SPACE, // presses SPACEBAR
 };
 
 
@@ -530,7 +530,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #ifdef ENCODER_ENABLE
 bool encoder_update_user(uint8_t index, bool clockwise)
 {
-    if (IS_LAYER_ON(_NAV)) // on NAV, scroll wheel
+    if (IS_LAYER_ON(_NAV) || IS_LAYER_ON(_MOUSE)) // on NAV or MOUSE, scroll wheel
     {
         if (clockwise){
           tap_code(KC_MS_WH_DOWN);
@@ -538,7 +538,7 @@ bool encoder_update_user(uint8_t index, bool clockwise)
           tap_code(KC_MS_WH_UP);
         }
     }
-    else
+    else // volume control on other layers
     {
         if (clockwise){
           tap_code(KC_VOLU);
