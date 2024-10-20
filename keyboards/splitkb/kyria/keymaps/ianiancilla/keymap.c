@@ -35,25 +35,173 @@ enum layers {
 #define NAV      _NAV
 #define MOU      _MOUSE
 
-// ************* MACROS *************
-#ifndef MACROS
+// ************* TAP DANCE AND MACROS************* 
+#ifndef TAP_DANCE_AND_MACRO
 
+// Definitions
+
+// all my macros
 enum custom_keycodes {
     M_AGRAVE = SAFE_RANGE, //à
-    M_AACUTE, //á
-    M_EGRAVE, //è
-    M_EACUTE, //é
-    M_IGRAVE, //ì
-    M_OGRAVE, //ò
-    M_UGRAVE, //ù
-    M_ETH, //ð
-    M_NTILDE, //ñ
-    M_CHARAMAP, //opens character map
-    M_TM //TM symbol
+    M_AACUTE,              //á
+    M_EGRAVE,              //è
+    M_EACUTE,              //é
+    M_IGRAVE,              //ì
+    M_OGRAVE,              //ò
+    M_UGRAVE,              //ù
+    M_ETH,                 //ð
+    M_NTILDE,              //ñ
+    M_CHARAMAP,            // opens character map
+    M_TM                   // TM symbol
 };
 
+// all my tapdances
+enum {
+    HA_SLA,    // tap for /, hold for #
+    SPEC_A,    // tap for à, hold for ä
+    SPEC_U,    // tap for ù, hold for ü
+    SPEC_O,    // tap for ò, hold for ö
+    CAPS_CW,   // tap for CAPS WORD, double tap for CAPS
+    LOCK,      // tap for <, hold for <3, double tap for lock
+    EMOJI,     // tap for =), hold for >.<, double tap for ò.ó
+    Z_PRINT,   // tap for z, hold for print
+    DEL_MOUSE, // tap for delete, hold to move to nav layer
+};
+
+
+// structs and functions needed for different tapdance behaviours
+typedef struct {
+    uint16_t tap;
+    uint16_t hold;
+    uint16_t held;
+} tap_dance_tap_hold_t;
+
+void tap_dance_tap_hold_finished(tap_dance_state_t *state, void *user_data) {
+    tap_dance_tap_hold_t *tap_hold = (tap_dance_tap_hold_t *)user_data;
+
+    if (state->pressed) {
+        if (state->count == 1
+#    ifndef PERMISSIVE_HOLD
+            && !state->interrupted
+#    endif
+        ) {
+            register_code16(tap_hold->hold);
+            tap_hold->held = tap_hold->hold;
+        } else {
+            register_code16(tap_hold->tap);
+            tap_hold->held = tap_hold->tap;
+        }
+    }
+}
+
+void tap_dance_tap_hold_reset(tap_dance_state_t *state, void *user_data) {
+    tap_dance_tap_hold_t *tap_hold = (tap_dance_tap_hold_t *)user_data;
+
+    if (tap_hold->held) {
+        unregister_code16(tap_hold->held);
+        tap_hold->held = 0;
+    }
+}
+
+#define ACTION_TAP_DANCE_TAP_HOLD(tap, hold) \
+        { .fn = {NULL, tap_dance_tap_hold_finished, tap_dance_tap_hold_reset}, .user_data = (void *)&((tap_dance_tap_hold_t){tap, hold, 0}), }
+
+#    define ACTION_TAP_DANCE_TAP_HOLD_FN(tap, hold) \
+        { .fn = {NULL, tap_dance_tap_hold_finished, tap_dance_tap_hold_reset}, .user_data = (void *)&((tap_dance_tap_hold_t){tap, hold, 0}), }
+
+
+// single tap-dance functions behaviours
+
+//// LOCK tap dance
+// void lock(tap_dance_state_t *state, void *user_data) {
+//    ql_tap_state.state = cur_dance(state);
+//    switch (ql_tap_state.state) {
+//        case TD_SINGLE_TAP:
+//            tap_code16(DE_LABK);
+//            break;
+//        case TD_SINGLE_HOLD:
+//            tap_code16(DE_LABK);
+//            tap_code16(KC_3);
+//            break;
+//        case TD_DOUBLE_TAP:
+//            tap_code16(LGUI(KC_L));
+//            break;
+//        default:
+//            break;
+//    }
+//}
+//
+//// EMOJI tap dance
+// void emoji(tap_dance_state_t *state, void *user_data) {
+//    ql_tap_state.state = cur_dance(state);
+//    switch (ql_tap_state.state) {
+//        case TD_SINGLE_TAP:
+//            tap_code16(DE_EQL);
+//            tap_code16(DE_RPRN);
+//            break;
+//        case TD_SINGLE_HOLD:
+//            tap_code16(DE_RABK);
+//            tap_code16(DE_DOT);
+//            tap_code16(DE_LABK);
+//            break;
+//        case TD_DOUBLE_TAP:
+//            tap_code16(DE_GRV);
+//            tap_code16(KC_O);
+//            tap_code16(DE_DOT);
+//            tap_code16(DE_ACUT);
+//            tap_code16(KC_O);
+//            break;
+//        default:
+//            break;
+//    }
+//}
+//
+//// CAPS_CW tap dance
+// void caps_cw(tap_dance_state_t *state, void *user_data) {
+//    ql_tap_state.state = cur_dance(state);
+//    switch (ql_tap_state.state) {
+//        case TD_SINGLE_TAP:
+//            caps_word_toggle();
+//            break;
+//        case TD_DOUBLE_TAP:
+//            tap_code(KC_CAPS);
+//            break;
+//        default:
+//            break;
+//    }
+//}
+
+// NOTE: all tap dances that use tap-hold function also need to be mentioned in process_record_user in the "macros" section, around line 55
+// Associate tap dance keys with their functionality
+tap_dance_action_t tap_dance_actions[] = {
+    [HA_SLA] = ACTION_TAP_DANCE_TAP_HOLD(DE_SLSH, DE_HASH),
+    [SPEC_A] = ACTION_TAP_DANCE_TAP_HOLD(M_AGRAVE, DE_ADIA),
+    [SPEC_U] = ACTION_TAP_DANCE_TAP_HOLD(M_UGRAVE, DE_UDIA),
+    [SPEC_O] = ACTION_TAP_DANCE_TAP_HOLD(M_OGRAVE, DE_ODIA),
+    [Z_PRINT] = ACTION_TAP_DANCE_TAP_HOLD(DE_Z, KC_PRINT_SCREEN),
+
+    //[CAPS_CW] = ACTION_TAP_DANCE_FN(caps_cw),
+    //[LOCK] = ACTION_TAP_DANCE_FN(lock),
+    //[EMOJI] = ACTION_TAP_DANCE_FN(emoji),
+};
+
+// associate custom buttons with their behaviour
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    tap_dance_action_t *action;
+
     switch (keycode) {
+        case TD(HA_SLA): // list all tap dance keycodes with tap-hold configurations
+        case TD(SPEC_A):
+        case TD(SPEC_U):
+        case TD(SPEC_O):
+        case TD(Z_PRINT):
+            action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
+            if (!record->event.pressed && action->state.count && !action->state.finished) {
+                tap_dance_tap_hold_t *tap_hold = (tap_dance_tap_hold_t *)action->user_data;
+                tap_code16(tap_hold->tap);
+            }
+            break;
+
         case M_AGRAVE: // à
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
@@ -132,217 +280,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 #endif
 
-// ************* TAP DANCE ************* (also see bottom of the file)
-#ifndef TAP_DANCE
-    // Define a type for as many tap dance states as you need
-typedef enum { TD_NONE, TD_UNKNOWN, TD_SINGLE_TAP, TD_SINGLE_HOLD, TD_DOUBLE_TAP } td_state_t;
-
-typedef struct {
-    bool is_press_action;
-    td_state_t state;
-} td_tap_t;
-
-// all my tapdances
-enum {
-    HA_SLA,   // tap for /, hold for #
-    CAPS_CW,  // tap for CAPS WORD, double tap for CAPS
-    LOCK, // tap for <, hold for <3, double tap for lock
-    EMOJI, // tap for =), hold for >.<, double tap for ò.ó
-    SPEC_A,   // tap for à, hold for ä
-    SPEC_U,  // tap for ù, hold for ü
-    SPEC_O,  // tap for ò, hold for ö
-    Z_PRINT, // tap for z, hold for print
-    DEL_MOUSE, // tap for delete, hold to move to nav layer
-};
-
-// Function associated with all tap dances
-td_state_t cur_dance(tap_dance_state_t *state);
-
-// TAP DANCE
-// Determine the current tap dance state
-td_state_t cur_dance(tap_dance_state_t *state) {
-    if (state->count == 1) {
-        if (!state->pressed)
-            return TD_SINGLE_TAP;
-        else
-            return TD_SINGLE_HOLD;
-    } else if (state->count == 2)
-        return TD_DOUBLE_TAP;
-    else
-        return TD_UNKNOWN;
-}
-
-// Initialize tap structure associated with example tap dance key
-static td_tap_t ql_tap_state = {.is_press_action = true, .state = TD_NONE};
-
-// SLASH_HASH tap dance
-void slash_hash(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            tap_code16(DE_SLSH);
-            break;
-        case TD_SINGLE_HOLD:
-            tap_code(DE_HASH);
-            break;
-        case TD_DOUBLE_TAP:
-            tap_code16(DE_SLSH);
-            tap_code16(DE_SLSH);
-            break;
-        default:
-            break;
-    }
-}
-
-// LOCK tap dance
-void lock(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            tap_code16(DE_LABK);
-            break;
-        case TD_SINGLE_HOLD:
-            tap_code16(DE_LABK);
-            tap_code16(KC_3);
-            break;
-        case TD_DOUBLE_TAP:
-            tap_code16(LGUI(KC_L));
-            break;
-        default:
-            break;
-    }
-}
-
-// EMOJI tap dance
-void emoji(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            tap_code16(DE_EQL);
-            tap_code16(DE_RPRN);
-            break;
-        case TD_SINGLE_HOLD:
-            tap_code16(DE_RABK);
-            tap_code16(DE_DOT);
-            tap_code16(DE_LABK);
-            break;
-        case TD_DOUBLE_TAP:
-            tap_code16(DE_GRV);
-            tap_code16(KC_O);
-            tap_code16(DE_DOT);
-            tap_code16(DE_ACUT);
-            tap_code16(KC_O);
-            break;
-        default:
-            break;
-    }
-}
-
-// CAPS_CW tap dance
-void caps_cw(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP:
-            caps_word_toggle();
-            break;
-        case TD_DOUBLE_TAP:
-            tap_code(KC_CAPS);
-            break;
-        default:
-            break;
-    }
-}
-
-// SPEC_A tap dance
-void special_a(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP: // A GRAVE
-            tap_code16(DE_GRV);
-            tap_code16(KC_A);
-            break;
-        case TD_SINGLE_HOLD: // A UMLAUT
-            tap_code16(DE_ADIA);
-            break;
-        case TD_DOUBLE_TAP: // A ACUTE
-            tap_code16(DE_ACUT);
-            tap_code16(KC_A);
-            break;
-        default:
-            break;
-    }
-}
-
-// SPEC_U tap dance
-void special_u(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP: // U GRAVE
-            tap_code16(DE_GRV);
-            tap_code16(KC_U);
-            break;
-        case TD_SINGLE_HOLD: // U UMLAUT
-            tap_code16(DE_UDIA);
-                break;
-        default:
-            break;
-    }
-}
-
-// SPEC_O tap dance
-void special_o(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP: // O GRAVE
-            tap_code16(DE_GRV);
-            tap_code16(KC_O);
-            break;
-        case TD_SINGLE_HOLD: // O UMLAUT
-            tap_code16(DE_ODIA);
-                break;
-        default:
-            break;
-    }
-}
-
-// Screenshot tap dance
-void z_print(tap_dance_state_t *state, void *user_data) {
-    ql_tap_state.state = cur_dance(state);
-    switch (ql_tap_state.state) {
-        case TD_SINGLE_TAP: // Z
-            tap_code16(DE_Z);
-            break;
-        case TD_SINGLE_HOLD: // print
-            tap_code16(KC_PSCR);
-            break;
-        default:
-            break;
-    }
-}
-
-
-// Associate tap dance keys with their functionality
-tap_dance_action_t tap_dance_actions[] = {
-    [HA_SLA] = ACTION_TAP_DANCE_FN(slash_hash),
-    [CAPS_CW] = ACTION_TAP_DANCE_FN(caps_cw),
-    [LOCK] = ACTION_TAP_DANCE_FN(lock),
-    [EMOJI] = ACTION_TAP_DANCE_FN(emoji),
-    [SPEC_A] = ACTION_TAP_DANCE_FN(special_a),
-    [SPEC_U] = ACTION_TAP_DANCE_FN(special_u),
-    [SPEC_O] = ACTION_TAP_DANCE_FN(special_o),
-    [Z_PRINT] = ACTION_TAP_DANCE_FN(z_print),
-};
-
-// Set a long-ish tapping term for tap-dance keys
-uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case QK_TAP_DANCE ... QK_TAP_DANCE_MAX:
-            return 275;
-        default:
-            return TAPPING_TERM;
-    }
-}
-#endif
 
 // ************* COMBOS *************
 #ifndef COMBOS
@@ -396,21 +333,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * Base Layer: COLEMAK
  *
  * ,-------------------------------------------.                              ,-------------------------------------------.
- * |  ESC   |   Q  |   W  |   F  |   P  |   G  |                              |   J  |   L  |   U  |   Y  |Cap/WC|  < > <3|
+ * |  ESC   |   Q  |   W  |   F  |   P  |   G  |                              |   J  |   L  |   U  |   Y  |Emoji |  < > <3|
  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
  * |  TAB   |   A  |   R  |   S  |   T  |   D  |                              |   H  |   N  |   E  |   I  |   O  |   ^ °  |
  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
  * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TTMOUS|LEADER|   K  |   M  | , ;  | . :  | - _  | MO NUM |
  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
- *                        | LAlt | LCtrl| Enter| tap /| MO   |  | RShft|Bckspc| Space| RCtrl|  =)  |
- *                        |      |      | LShft|hold #| SPEC |  |      |      |      |      | >.<  |
+ *                        | LAlt | LCtrl| Enter| tap /| MO   |  | RShft|Bckspc| Space| RCtrl|CapsW |
+ *                        |      |      | LShft|hold #| SPEC |  |      |      |      |      |CapLck|
  *                        `----------------------------------'  `----------------------------------'
  */
     [_COLEMAK] = LAYOUT(
-     KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(CAPS_CW),TD(LOCK),
+     KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(EMOJI),TD(LOCK),
      KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                        KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
      KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TT(MOU), QK_LEAD, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
-                              KC_LALT, KC_LCTL,SC_SENT,TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(EMOJI)
+                              KC_LALT, KC_LCTL,SC_SENT,TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
     ),
 
   /*
