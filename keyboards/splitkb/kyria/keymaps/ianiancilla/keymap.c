@@ -29,15 +29,15 @@ enum layers {
 
 
 // Aliases for readability
-#define CLMK  _COLEMAK
+#define CLMK     _COLEMAK
 #define SPEC     _SPECIAL
 #define NUM      _NUM
 #define NAV      _NAV
 #define MOU      _MOUSE
 
-
-
 // ************* MACROS *************
+#ifndef MACROS
+
 enum custom_keycodes {
     M_AGRAVE = SAFE_RANGE, //à
     M_AACUTE, //á
@@ -130,9 +130,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 };
 
-// ************* TAP DANCE ************* (also see bottom of the file)
+#endif
 
-// Define a type for as many tap dance states as you need
+// ************* TAP DANCE ************* (also see bottom of the file)
+#ifndef TAP_DANCE
+    // Define a type for as many tap dance states as you need
 typedef enum { TD_NONE, TD_UNKNOWN, TD_SINGLE_TAP, TD_SINGLE_HOLD, TD_DOUBLE_TAP } td_state_t;
 
 typedef struct {
@@ -340,9 +342,10 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
             return TAPPING_TERM;
     }
 }
-
+#endif
 
 // ************* COMBOS *************
+#ifndef COMBOS
 
 enum combos {
     CB_COLEMAK,
@@ -382,9 +385,10 @@ combo_t key_combos[] = {
     [CB_MUTE] = COMBO(wfp_combo, KC_AUDIO_MUTE),
     [CB_SPACE] = COMBO(cv_combo, KC_SPC)
 };
-
+#endif
 
 // ************* LAYERS *************
+#ifndef LAYER_MAP
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -514,7 +518,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //                                  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______
 //     ),
 };
+#endif
 
+// ************* ENCODER *************
+#ifndef ENCODER
 /* The default OLED and rotary encoder code can be found at the bottom of qmk_firmware/keyboards/splitkb/kyria/rev1/rev1.c
  * These default settings can be overriden by your own settings in your keymap.c
  * For your convenience, here's a copy of those settings so that you can uncomment them if you wish to apply your own modifications.
@@ -543,6 +550,10 @@ bool encoder_update_user(uint8_t index, bool clockwise)
 };
 #endif
 
+#endif
+
 // TODO
-// character map
-// increase mouse scroll speed
+// - fix tap dances
+// - mouse scroll
+// - leader key behaviour
+//
