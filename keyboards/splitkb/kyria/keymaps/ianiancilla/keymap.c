@@ -29,11 +29,11 @@ enum layers {
 
 
 // Aliases for readability
-#define COLEMAK  DF(_COLEMAK)
-#define SPEC     MO(_SPECIAL)
-#define NUM      MO(_NUM)
-#define NAV      MO(_NAV)
-#define MOU      MO(_MOUSE)
+#define CLMK  _COLEMAK
+#define SPEC     _SPECIAL
+#define NUM      _NUM
+#define NAV      _NAV
+#define MOU      _MOUSE
 
 
 
@@ -396,7 +396,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
  * |  TAB   |   A  |   R  |   S  |   T  |   D  |                              |   H  |   N  |   E  |   I  |   O  |   ^ °  |
  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
- * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TO NUM|TTMOUS|   K  |   M  | , ;  | . :  | - _  | MO NUM |
+ * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TTMOUS|LEADER|   K  |   M  | , ;  | . :  | - _  | MO NUM |
  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
  *                        | LAlt | LCtrl| Enter| tap /| MO   |  | RShft|Bckspc| Space| RCtrl|  =)  |
  *                        |      |      | LShft|hold #| SPEC |  |      |      |      |      | >.<  |
@@ -405,7 +405,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_COLEMAK] = LAYOUT(
      KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(CAPS_CW),TD(LOCK),
      KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                        KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
-     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TO(NUM), TT(MOU), KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, MO(NUM),
+     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TO(MOU), QK_LEAD, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
                                  KC_LALT, KC_LCTL,SC_SENT,TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(EMOJI)
     ),
 
