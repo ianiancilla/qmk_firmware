@@ -70,6 +70,8 @@ enum {
 
 
 // structs and functions needed for different tapdance behaviours
+
+// TAP-HOLD BEHAVIOUR (different from multi-tap in order to fire off taps asap, rather than waiting for tapping term
 typedef struct {
     uint16_t tap;
     uint16_t hold;
@@ -109,67 +111,166 @@ void tap_dance_tap_hold_reset(tap_dance_state_t *state, void *user_data) {
 #    define ACTION_TAP_DANCE_TAP_HOLD_FN(tap, hold) \
         { .fn = {NULL, tap_dance_tap_hold_finished, tap_dance_tap_hold_reset}, .user_data = (void *)&((tap_dance_tap_hold_t){tap, hold, 0}), }
 
+// MULTI FUNCTION BEHAVIOUR
+typedef enum {
+    TD_NONE,
+    TD_UNKNOWN,
+    TD_SINGLE_TAP,
+    TD_SINGLE_HOLD,
+    TD_DOUBLE_TAP,
+    TD_DOUBLE_HOLD,
+    TD_DOUBLE_SINGLE_TAP, // Send two single taps
+    TD_TRIPLE_TAP,
+    TD_TRIPLE_HOLD
+} tap_dance_multi_state_t;
 
-// single tap-dance functions behaviours
+typedef struct {
+    bool       is_press_action;
+    tap_dance_multi_state_t state;
+} tap_dance_multi_tap_t;
+
+
+/* Return an integer that corresponds to what kind of tap dance should be executed.
+ *
+ * How to figure out tap dance state: interrupted and pressed.
+ *
+ * Interrupted: If the state of a dance is "interrupted", that means that another key has been hit
+ *  under the tapping term. This is typically indicative that you are trying to "tap" the key.
+ *
+ * Pressed: Whether or not the key is still being pressed. If this value is true, that means the tapping term
+ *  has ended, but the key is still being pressed down. This generally means the key is being "held".
+ *
+ * One thing that is currently not possible with qmk software in regards to tap dance is to mimic the "permissive hold"
+ *  feature. In general, advanced tap dances do not work well if they are used with commonly typed letters.
+ *  For example "A". Tap dances are best used on non-letter keys that are not hit while typing letters.
+ *
+ * Good places to put an advanced tap dance:
+ *  z,q,x,j,k,v,b, any function key, home/end, comma, semi-colon
+ *
+ * Criteria for "good placement" of a tap dance key:
+ *  Not a key that is hit frequently in a sentence
+ *  Not a key that is used frequently to double tap, for example 'tab' is often double tapped in a terminal, or
+ *    in a web form. So 'tab' would be a poor choice for a tap dance.
+ *  Letters used in common words as a double. For example 'p' in 'pepper'. If a tap dance function existed on the
+ *    letter 'p', the word 'pepper' would be quite frustrating to type.
+ *
+ * For the third point, there does exist the 'TD_DOUBLE_SINGLE_TAP', however this is not fully tested
+ *
+ */
+tap_dance_multi_state_t cur_dance(tap_dance_state_t *state) {
+    if (state->count == 1) {
+        if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
+        // Key has not been interrupted, but the key is still held. Means you want to send a 'HOLD'.
+        else
+            return TD_SINGLE_HOLD;
+    } else if (state->count == 2) {
+        // TD_DOUBLE_SINGLE_TAP is to distinguish between typing "pepper", and actually wanting a double tap
+        // action when hitting 'pp'. Suggested use case for this return value is when you want to send two
+        // keystrokes of the key, and not the 'double tap' action/macro.
+        if (state->interrupted)
+            return TD_DOUBLE_SINGLE_TAP;
+        else if (state->pressed)
+            return TD_DOUBLE_HOLD;
+        else
+            return TD_DOUBLE_TAP;
+    }
+
+    // Assumes no one is trying to type the same letter three times (at least not quickly).
+    // If your tap dance key is 'KC_W', and you want to type "www." quickly - then you will need to add
+    // an exception here to return a 'TD_TRIPLE_SINGLE_TAP', and define that enum just like 'TD_DOUBLE_SINGLE_TAP'
+    if (state->count == 3) {
+        if (state->interrupted || !state->pressed)
+            return TD_TRIPLE_TAP;
+        else
+            return TD_TRIPLE_HOLD;
+    } else
+        return TD_UNKNOWN;
+}
+
+// functions specific to each custom tap-dance
+
+// CAPS_CW tap dance
+static tap_dance_multi_tap_t capscw_tap_state = {
+    .is_press_action = true,
+    .state = TD_NONE
+};
+
+void capscw_finished(tap_dance_state_t *state, void *user_data) {
+    capscw_tap_state.state = cur_dance(state);
+    switch (capscw_tap_state.state) {
+        case TD_SINGLE_TAP:
+            caps_word_toggle();
+            break;
+        case TD_SINGLE_HOLD:
+            tap_code(KC_CAPS);
+            break;
+        case TD_DOUBLE_TAP:
+            caps_word_toggle();
+            break;
+        default:
+            break;
+    }
+}
+
+void capscw_reset(tap_dance_state_t *state, void *user_data) {
+    capscw_tap_state.state = TD_NONE;
+}
 
 //// LOCK tap dance
-// void lock(tap_dance_state_t *state, void *user_data) {
-//    ql_tap_state.state = cur_dance(state);
-//    switch (ql_tap_state.state) {
-//        case TD_SINGLE_TAP:
-//            tap_code16(DE_LABK);
-//            break;
-//        case TD_SINGLE_HOLD:
-//            tap_code16(DE_LABK);
-//            tap_code16(KC_3);
-//            break;
-//        case TD_DOUBLE_TAP:
-//            tap_code16(LGUI(KC_L));
-//            break;
-//        default:
-//            break;
-//    }
-//}
-//
-//// EMOJI tap dance
-// void emoji(tap_dance_state_t *state, void *user_data) {
-//    ql_tap_state.state = cur_dance(state);
-//    switch (ql_tap_state.state) {
-//        case TD_SINGLE_TAP:
-//            tap_code16(DE_EQL);
-//            tap_code16(DE_RPRN);
-//            break;
-//        case TD_SINGLE_HOLD:
-//            tap_code16(DE_RABK);
-//            tap_code16(DE_DOT);
-//            tap_code16(DE_LABK);
-//            break;
-//        case TD_DOUBLE_TAP:
-//            tap_code16(DE_GRV);
-//            tap_code16(KC_O);
-//            tap_code16(DE_DOT);
-//            tap_code16(DE_ACUT);
-//            tap_code16(KC_O);
-//            break;
-//        default:
-//            break;
-//    }
-//}
-//
-//// CAPS_CW tap dance
-// void caps_cw(tap_dance_state_t *state, void *user_data) {
-//    ql_tap_state.state = cur_dance(state);
-//    switch (ql_tap_state.state) {
-//        case TD_SINGLE_TAP:
-//            caps_word_toggle();
-//            break;
-//        case TD_DOUBLE_TAP:
-//            tap_code(KC_CAPS);
-//            break;
-//        default:
-//            break;
-//    }
-//}
+static tap_dance_multi_tap_t lock_tap_state = {.is_press_action = true, .state = TD_NONE};
+
+void lock_finished(tap_dance_state_t *state, void *user_data) {
+    lock_tap_state.state = cur_dance(state);
+    switch (lock_tap_state.state) {
+        case TD_SINGLE_TAP:
+            tap_code16(DE_LABK);
+            break;
+        case TD_SINGLE_HOLD:
+            tap_code16(DE_LABK);
+            tap_code16(KC_3);
+            break;
+        case TD_DOUBLE_TAP:
+            tap_code16(LGUI(KC_L));
+            break;
+        default:
+            break;
+    }
+}
+
+void lock_reset(tap_dance_state_t *state, void *user_data) {
+    lock_tap_state.state = TD_NONE;
+}
+
+// EMOJI tap dance
+static tap_dance_multi_tap_t emoji_tap_state = {.is_press_action = true, .state = TD_NONE};
+
+void emoji_finished(tap_dance_state_t *state, void *user_data) {
+    emoji_tap_state.state = cur_dance(state);
+    switch (emoji_tap_state.state) {
+        case TD_SINGLE_TAP:
+            tap_code16(DE_EQL);
+            tap_code16(DE_RPRN);
+            break;
+        case TD_SINGLE_HOLD:
+            tap_code16(DE_RABK);
+            tap_code16(DE_DOT);
+            tap_code16(DE_LABK);
+            break;
+        case TD_DOUBLE_TAP:
+            tap_code16(DE_GRV);
+            tap_code16(KC_O);
+            tap_code16(DE_DOT);
+            tap_code16(DE_ACUT);
+            tap_code16(KC_O);
+            break;
+        default:
+            break;
+    }
+}
+
+void emoji_reset(tap_dance_state_t *state, void *user_data) {
+    emoji_tap_state.state = TD_NONE;
+}
 
 // NOTE: all tap dances that use tap-hold function also need to be mentioned in process_record_user in the "macros" section, around line 55
 // Associate tap dance keys with their functionality
@@ -177,12 +278,10 @@ tap_dance_action_t tap_dance_actions[] = {
     [HA_SLA] = ACTION_TAP_DANCE_TAP_HOLD(DE_SLSH, DE_HASH),
     [SPEC_A] = ACTION_TAP_DANCE_TAP_HOLD(M_AGRAVE, DE_ADIA),
     [SPEC_U] = ACTION_TAP_DANCE_TAP_HOLD(M_UGRAVE, DE_UDIA),
-    [SPEC_O] = ACTION_TAP_DANCE_TAP_HOLD(M_OGRAVE, DE_ODIA),
-    [Z_PRINT] = ACTION_TAP_DANCE_TAP_HOLD(DE_Z, KC_PRINT_SCREEN),
-
-    //[CAPS_CW] = ACTION_TAP_DANCE_FN(caps_cw),
-    //[LOCK] = ACTION_TAP_DANCE_FN(lock),
-    //[EMOJI] = ACTION_TAP_DANCE_FN(emoji),
+    [SPEC_O] = ACTION_TAP_DANCE_TAP_HOLD(M_OGRAVE, DE_ODIA), [Z_PRINT] = ACTION_TAP_DANCE_TAP_HOLD(DE_Z, KC_PRINT_SCREEN),
+    [CAPS_CW] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, capscw_finished, capscw_reset),
+    [LOCK] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lock_finished, lock_reset),
+    [EMOJI] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, emoji_finished, emoji_reset),
 };
 
 // associate custom buttons with their behaviour
