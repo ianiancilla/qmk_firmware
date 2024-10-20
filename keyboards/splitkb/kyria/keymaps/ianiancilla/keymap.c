@@ -108,9 +108,6 @@ void tap_dance_tap_hold_reset(tap_dance_state_t *state, void *user_data) {
 #define ACTION_TAP_DANCE_TAP_HOLD(tap, hold) \
         { .fn = {NULL, tap_dance_tap_hold_finished, tap_dance_tap_hold_reset}, .user_data = (void *)&((tap_dance_tap_hold_t){tap, hold, 0}), }
 
-#    define ACTION_TAP_DANCE_TAP_HOLD_FN(tap, hold) \
-        { .fn = {NULL, tap_dance_tap_hold_finished, tap_dance_tap_hold_reset}, .user_data = (void *)&((tap_dance_tap_hold_t){tap, hold, 0}), }
-
 // MULTI FUNCTION BEHAVIOUR
 typedef enum {
     TD_NONE,
@@ -244,6 +241,52 @@ void lock_reset(tap_dance_state_t *state, void *user_data) {
 // EMOJI tap dance
 static tap_dance_multi_tap_t emoji_tap_state = {.is_press_action = true, .state = TD_NONE};
 
+// SPEC_ACCENTS function
+typedef struct {
+    uint16_t tap_key1;
+    uint16_t tap_key2;
+    uint16_t hold;
+    uint16_t held1;
+    uint16_t held2;
+} accent_tap_hold_t;
+
+// two key inputs on tap, one on hold
+#define ACTION_TAP_SPECIAL(tap_key1, tap_key2, hold) \
+        { .fn = {NULL, spec_tap_hold_finished, spec_tap_hold_reset}, .user_data = (void *)&((accent_tap_hold_t){tap_key1, tap_key2, hold, 0}), }
+
+void spec_tap_hold_finished(tap_dance_state_t *state, void *user_data) {
+    accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)user_data;
+
+    if (state->pressed) {
+        if (state->count == 1
+#    ifndef PERMISSIVE_HOLD
+            && !state->interrupted
+#    endif
+        ) {
+            register_code16(tap_hold->hold);
+            tap_hold->held1 = tap_hold->hold;
+        } else {
+            register_code16(tap_hold->tap_key1);
+            register_code16(tap_hold->tap_key2);
+            tap_hold->held1 = tap_hold->tap_key1;
+            tap_hold->held2 = tap_hold->tap_key2;
+        }
+    }
+}
+
+void spec_tap_hold_reset(tap_dance_state_t *state, void *user_data) {
+    accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)user_data;
+
+    if (tap_hold->held1) {
+        unregister_code16(tap_hold->held1);
+        tap_hold->held1 = 0;
+    }
+    if (tap_hold->held2) {
+        unregister_code16(tap_hold->held2);
+        tap_hold->held2 = 0;
+    }
+}
+
 void emoji_finished(tap_dance_state_t *state, void *user_data) {
     emoji_tap_state.state = cur_dance(state);
     switch (emoji_tap_state.state) {
@@ -276,9 +319,10 @@ void emoji_reset(tap_dance_state_t *state, void *user_data) {
 // Associate tap dance keys with their functionality
 tap_dance_action_t tap_dance_actions[] = {
     [HA_SLA] = ACTION_TAP_DANCE_TAP_HOLD(DE_SLSH, DE_HASH),
-    [SPEC_A] = ACTION_TAP_DANCE_TAP_HOLD(M_AGRAVE, DE_ADIA),
-    [SPEC_U] = ACTION_TAP_DANCE_TAP_HOLD(M_UGRAVE, DE_UDIA),
-    [SPEC_O] = ACTION_TAP_DANCE_TAP_HOLD(M_OGRAVE, DE_ODIA), [Z_PRINT] = ACTION_TAP_DANCE_TAP_HOLD(DE_Z, KC_PRINT_SCREEN),
+    [SPEC_A] = ACTION_TAP_SPECIAL(DE_GRV, KC_A, DE_ADIA),
+    [SPEC_U] = ACTION_TAP_SPECIAL(DE_GRV, KC_U, DE_UDIA),
+    [SPEC_O] = ACTION_TAP_SPECIAL(DE_GRV, KC_O, DE_ODIA),
+    [Z_PRINT] = ACTION_TAP_DANCE_TAP_HOLD(DE_Z, KC_PRINT_SCREEN),
     [CAPS_CW] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, capscw_finished, capscw_reset),
     [LOCK] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lock_finished, lock_reset),
     [EMOJI] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, emoji_finished, emoji_reset),
@@ -287,20 +331,8 @@ tap_dance_action_t tap_dance_actions[] = {
 // associate custom buttons with their behaviour
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     tap_dance_action_t *action;
-
+    
     switch (keycode) {
-        case TD(HA_SLA): // list all tap dance keycodes with tap-hold configurations
-        case TD(SPEC_A):
-        case TD(SPEC_U):
-        case TD(SPEC_O):
-        case TD(Z_PRINT):
-            action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
-            if (!record->event.pressed && action->state.count && !action->state.finished) {
-                tap_dance_tap_hold_t *tap_hold = (tap_dance_tap_hold_t *)action->user_data;
-                tap_code16(tap_hold->tap);
-            }
-            break;
-
         case M_AGRAVE: // à
             if (record->event.pressed) {
                 tap_code16(DE_GRV);
@@ -371,6 +403,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case M_TM: // ™
             if (record->event.pressed) {
                 SEND_STRING(SS_DOWN(X_LALT) SS_TAP(X_P0) SS_TAP(X_P1) SS_TAP(X_P5) SS_TAP(X_P3) SS_UP(X_LALT));
+            }
+            break;
+
+        case TD(HA_SLA): // list all tap dance keycodes with tap-hold configurations
+        case TD(SPEC_A):
+        case TD(SPEC_U):
+        case TD(SPEC_O):
+        case TD(Z_PRINT):
+            action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
+            if (!record->event.pressed && action->state.count && !action->state.finished) {
+                accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)action->user_data;
+                tap_code16(tap_hold->tap_key1);
+                tap_code16(tap_hold->tap_key2);
             }
             break;
     }
@@ -446,7 +491,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(EMOJI),TD(LOCK),
      KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                        KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
      KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TT(MOU), QK_LEAD, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
-                              KC_LALT, KC_LCTL,SC_SENT,TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
+                        KC_LALT, KC_LCTL,SFT_T(KC_ENT),TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
     ),
 
   /*
