@@ -371,7 +371,7 @@ const uint16_t PROGMEM cv_combo[]  = {KC_C, KC_V, COMBO_END};
 
 
 combo_t key_combos[] = {
-    [CB_COLEMAK] = COMBO(enter_space_combo, TO(COLEMAK)),
+    [CB_COLEMAK] = COMBO(enter_space_combo, TO(_COLEMAK)),
     [CB_BKSPACE] = COMBO(pt_combo, KC_BSPC),
     [CB_APOSTROPHE] = COMBO(tv_combo, DE_QUOT),
     [CB_DEL] = COMBO(gd_combo, KC_DEL),
@@ -447,7 +447,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      [_NUM] = LAYOUT(
        KC_TRNS, _______, DE_7   , DE_8   , DE_9   , _______,                                     _______, _______, _______, _______, _______, _______,
        KC_TRNS, DE_0   , DE_4   , DE_5   , DE_6   , DE_DOT ,                                     _______, DE_PLUS, DE_MINS, _______, _______, _______,
-       KC_TRNS, _______, DE_1   , DE_2   , DE_3   , DE_COMM, KC_TRNS,TO(COLEMAK),KC_TRNS,KC_TRNS,_______, DE_ASTR, DE_SLSH, _______, _______, _______,
+       KC_TRNS, _______, DE_1   , DE_2   , DE_3   , DE_COMM, KC_TRNS,TO(CLMK),KC_TRNS,KC_TRNS,_______, DE_ASTR, DE_SLSH, _______, _______, _______,
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
@@ -468,7 +468,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_NAV] = LAYOUT(
        KC_TRNS, _______, KC_F7  , KC_F8  , KC_F9  , KC_F12 ,                                     KC_INS , KC_HOME,  KC_UP , KC_END , KC_PGUP, KC_AUDIO_VOL_UP,
        KC_TRNS, _______, KC_F4  , KC_F5  , KC_F6  , KC_F11 ,                                     KC_DEL , KC_LEFT, KC_DOWN,KC_RIGHT, KC_PGDN, KC_AUDIO_VOL_DOWN,
-       KC_TRNS, _______, KC_F1  , KC_F2  , KC_F3  , KC_F10 , KC_TRNS,TO(COLEMAK),KC_TRNS,KC_TRNS,KC_PSCR,KC_CALCULATOR, _______, _______, _______, KC_AUDIO_MUTE,
+       KC_TRNS, _______, KC_F1  , KC_F2  , KC_F3  , KC_F10 , KC_TRNS,TO(CLMK),KC_TRNS,KC_TRNS,KC_PSCR,KC_CALCULATOR, _______, _______, _______, KC_AUDIO_MUTE,
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 
