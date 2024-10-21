@@ -68,7 +68,6 @@ enum {
     DEL_MOUSE, // tap for delete, hold to move to nav layer
 };
 
-
 // structs and functions needed for different tapdance behaviours
 
 // TAP-HOLD BEHAVIOUR (different from multi-tap in order to fire off taps asap, rather than waiting for tapping term
@@ -407,10 +406,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
 
         case TD(HA_SLA): // list all tap dance keycodes with tap-hold configurations
-        case TD(SPEC_A):
+        case TD(Z_PRINT):
+            action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
+            if (!record->event.pressed && action->state.count && !action->state.finished) {
+                tap_dance_tap_hold_t *tap_hold = (tap_dance_tap_hold_t *)action->user_data;
+                tap_code16(tap_hold->tap);
+            }
+            break;
+
+        case TD(SPEC_A):  // list all tap dance keycodes with tap-hold configurations and double key on tap
         case TD(SPEC_U):
         case TD(SPEC_O):
-        case TD(Z_PRINT):
             action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
             if (!record->event.pressed && action->state.count && !action->state.finished) {
                 accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)action->user_data;
