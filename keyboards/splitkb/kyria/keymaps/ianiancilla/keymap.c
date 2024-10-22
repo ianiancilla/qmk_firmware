@@ -17,6 +17,8 @@
 #include "keymap_german.h"
 #include "sendstring_german.h"
 
+// auto-mouse and other pointer stuff
+#include "pointing_device.h"
 
  // LAYERS
 enum layers {
@@ -25,6 +27,7 @@ enum layers {
     _NUM,
     _NAV,
     _MOUSE,
+    _AUTO_MOUSE,
 };
 
 
@@ -34,6 +37,63 @@ enum layers {
 #define NUM      _NUM
 #define NAV      _NAV
 #define MOU      _MOUSE
+
+
+
+// ************* TRACKPAD *************
+#ifndef TRACKPAD
+
+//           SCROLLING WITH TRACKPAD
+// ------------ For 40mm TRACKPAD ---------------
+// Modify these values to adjust the scrolling speed
+float aux_dpi = 0;
+#    define SCROLL_DIVISOR_H_BASE 26.0 // Horizontal scroll speed
+#    define SCROLL_DIVISOR_V_BASE 13.0 // Vertical scroll speed
+
+float scroll_divisor_h = SCROLL_DIVISOR_H_BASE;
+float scroll_divisor_v = SCROLL_DIVISOR_V_BASE;
+
+// Variables to store accumulated scroll values
+float scroll_accumulated_h = 0;
+float scroll_accumulated_v = 0;
+
+// is the trackpad a scrollwheel now
+bool set_scrolling = false;
+
+
+// AUTO-MOUSE LAYER
+void pointing_device_init_user(void) {
+    set_auto_mouse_layer(_AUTO_MOUSE); // only required if AUTO_MOUSE_DEFAULT_LAYER is not set to index of <mouse_layer>
+    set_auto_mouse_enable(true);       // always required before the auto mouse feature will work
+}
+
+report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
+    // SCROLLING FUNCTIONALITY
+    //  You can activate the scrolling with a custom keycode in which you set set_scrolling to true
+    if (set_scrolling) {
+        // Accumulate scroll values based on mouse movement and divisors
+        scroll_accumulated_h += (float)mouse_report.x / scroll_divisor_h;
+        scroll_accumulated_v += (float)mouse_report.y / scroll_divisor_v;
+
+        // Assign integer parts of accumulated scroll values to the mouse report
+        mouse_report.h = (int8_t)scroll_accumulated_h;  // Horizontal scroll
+        mouse_report.v = -(int8_t)scroll_accumulated_v; // Vertical scroll (negated for natural scroll)
+
+        // Update accumulated scroll values by subtracting the integer parts
+        scroll_accumulated_h -= (int8_t)scroll_accumulated_h;
+        scroll_accumulated_v -= (int8_t)scroll_accumulated_v;
+
+        // Prevent cursor movement while scrolling
+        mouse_report.x = 0;
+        mouse_report.y = 0;
+    }
+
+    // Return the modified or unmodified mouse report
+    return mouse_report;
+}
+
+#endif
+
 
 // ************* TAP DANCE AND MACROS************* 
 #ifndef TAP_DANCE_AND_MACRO
@@ -52,7 +112,15 @@ enum custom_keycodes {
     M_ETH,                 //ð
     M_NTILDE,              //ñ
     M_CHARAMAP,            // opens character map
-    M_TM                   // TM symbol
+    M_TM,                   // TM symbol
+    M_DPI_INC, // Increase trackpad DPI
+    M_DPI_DEC, // Decrease trackpad DPI
+    M_DPI_RESET, // Reset trackpad DPI
+    M_SNIPE, // Decreases temporarily the trackpad DPI (and restore when released)
+             // if using for scrolling : decreases scrolling speed
+    M_BLITZ, // Increases temporarily the trackpad DPI (and restore when released)
+             // if using for scrolling : increases scrolling speed
+    M_SCROLL, // makes trackpad a scrollwheel
 };
 
 // all my tapdances
@@ -424,6 +492,78 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_code16(tap_hold->tap_key2);
             }
             break;
+
+        // ******** AUTO-MOUSE LAYER ********
+        case M_DPI_INC: //Increase trackpad DPI
+            if (record->event.pressed) {
+                pointing_device_set_cpi(pointing_device_get_cpi() + 100);
+            }
+            break;
+
+        case M_DPI_DEC: //Decrease trackpad DPI
+            if (record->event.pressed) {
+                pointing_device_set_cpi(pointing_device_get_cpi() - 100);
+            }
+            break;
+
+        case M_DPI_RESET: // Resets trackpad DPI
+            if (record->event.pressed) {
+                pointing_device_set_cpi(4200);
+            }
+            break;
+
+        case M_SNIPE: //Decreases temporarily the trackpad DPI (and restore when released)
+                      //if using for scrolling : decreases scrolling speed
+            if (record->event.pressed) {
+                if (set_scrolling) {
+                    aux_dpi = pointing_device_get_cpi();
+                    pointing_device_set_cpi(200);
+                    scroll_divisor_h = SCROLL_DIVISOR_H_BASE * 2.0;
+                    scroll_divisor_v = SCROLL_DIVISOR_V_BASE * 2.0;
+                } else {
+                    pointing_device_set_cpi(pointing_device_get_cpi() - 300);
+                }
+            } else {
+                if (set_scrolling) {
+                    pointing_device_set_cpi(aux_dpi);
+                    scroll_divisor_h = SCROLL_DIVISOR_H_BASE;
+                    scroll_divisor_v = SCROLL_DIVISOR_V_BASE;
+                } else {
+                    pointing_device_set_cpi(pointing_device_get_cpi() + 300);
+                }
+            }
+            break;
+
+        case M_BLITZ: //Increases temporarily the trackpad DPI (and restore when released)
+                      //if using for scrolling : increases scrolling speed
+            if (set_scrolling) {
+                if (record->event.pressed) {
+                    aux_dpi = pointing_device_get_cpi();
+                    pointing_device_set_cpi(1000);
+                    scroll_divisor_h = SCROLL_DIVISOR_H_BASE / 2.0;
+                    scroll_divisor_v = SCROLL_DIVISOR_V_BASE / 2.0;
+                } else {
+                    pointing_device_set_cpi(aux_dpi);
+                    scroll_divisor_h = SCROLL_DIVISOR_H_BASE;
+                    scroll_divisor_v = SCROLL_DIVISOR_V_BASE;
+                }
+            } else
+            {
+                if (record->event.pressed) {
+                pointing_device_set_cpi(pointing_device_get_cpi() + 300);
+                } else {
+                    pointing_device_set_cpi(pointing_device_get_cpi() - 300);
+                }
+            }
+            break;
+
+        case M_SCROLL: // makes trackpad a scrollwheel
+            if (record->event.pressed) {
+                set_scrolling = true;
+            } else {
+                set_scrolling = false;
+            }
+            return false;
     }
     return true;
 };
@@ -494,10 +634,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                        `----------------------------------'  `----------------------------------'
  */
     [_COLEMAK] = LAYOUT(
-     KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(EMOJI),TD(LOCK),
-     KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                        KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
-     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TT(MOU),KC_LALT, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
-                       QK_LEAD, KC_LCTL,SFT_T(KC_ENT),TD(HA_SLA),MO(SPEC),       KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
+     KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                          KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(EMOJI),TD(LOCK),
+     KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                          KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
+     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),TT(_AUTO_MOUSE),KC_LALT, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
+                       QK_LEAD, KC_LCTL,SFT_T(KC_ENT),TD(HA_SLA),MO(SPEC),         KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
     ),
 
   /*
@@ -585,6 +725,27 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
+ /*
+  * Auto-Mouse layer
+  *
+  * ,-------------------------------------------.                              ,-------------------------------------------.
+  * | TRAN   | BLITZ|      |      |      |      |                              |      |      |      |      | DPI+ |        |
+  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
+  * | TRAN   | SNIPE|RCLICK|MCLICK|LCLICK|      |                              |      |      |      |      |DPIres|        |
+  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
+  * | TRAN   |      |      |      |      |      | TRAN | TRAN |  | TRAN | TRAN |      |      |      |      | DPI- |        |
+  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
+  *                        | TRAN | TRAN | TRAN |SCROLL| TRAN |  | TRAN | TRAN | TRAN | TRAN | TRAN |
+  *                        |      |      |      |      |      |  |      |      |      |      |      |
+  *                        `----------------------------------'  `----------------------------------'
+  */
+     [_AUTO_MOUSE] = LAYOUT(
+       KC_TRNS, M_BLITZ, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_INC, XXXXXXX,
+       KC_TRNS, M_SNIPE,M_SCROLL, MS_BTN3, MS_BTN1, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_RESET, XXXXXXX,
+       KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_DEC, XXXXXXX,
+                                  KC_TRNS, KC_TRNS, KC_TRNS, M_SCROLL, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+     ),
+
 // /*
 //  * Layer template
 //  *
@@ -640,8 +801,7 @@ bool encoder_update_user(uint8_t index, bool clockwise)
 
 #endif
 
+
 // TODO
-// - mouse scroll
 // - leader key behaviour
-// - charamap macro
 //

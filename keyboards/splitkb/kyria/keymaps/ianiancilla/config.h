@@ -14,18 +14,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+//https://github.com/qmk/qmk_firmware/blob/master/docs/config_options.md
+
 #pragma once
 
 #ifdef POINTING_DEVICE_ENABLE
+
+// commented out DEBOUNCE as it does not work with Relative Mode
+
 #    define CIRQUE_PINNACLE_DIAMETER_MM 40
 #    define POINTING_DEVICE_ROTATION_90
 
-#    define CIRQUE_PINNACLE_ATTENUATION EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_2X
+#    define CIRQUE_PINNACLE_ATTENUATION EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_4X //was 2X before
+
 
 #    define CIRQUE_PINNACLE_POSITION_MODE CIRQUE_PINNACLE_RELATIVE_MODE
-#    define CIRQUE_PINNACLE_TAP_ENABLE
-#    define CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE
-#    define POINTING_DEVICE_GESTURES_SCROLL_ENABLE
+#    define CIRQUE_PINNACLE_TAP_ENABLE  //might give problems with auto-mouse
+//#    define CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE  //never managed to make this work anyway
+//#    define POINTING_DEVICE_GESTURES_SCROLL_ENABLE  //might give problems with auto-mouse
+
+
+// ******** taken from Rikiki: ********
+#    define DEBOUNCE 8 // added debounce to prevent the trackpad occasionally teleporting
+#    define POINTING_DEVICE_CIRQUE_PINNACLE_DPI 4200 // change DPI to what is more comfortable
+
+/*Enables support for extended reports (-32767 to 32767, instead of -127 to 127),
+which may allow for smoother reporting, and prevent maxing out of the reports.
+Applies to both Pointing Device and Mousekeys.*/
+#    define MOUSE_EXTENDED_REPORT  // Enables support for extended i16 mouse reports (instead of i8).
+
+#    define POINTING_DEVICE_TASK_THROTTLE_MS 10 // Limits the frequency that the sensor is polled for motion.
+
+// MOUSE AUTO-LAYER
+// https://docs.qmk.fm/features/pointing_device#how-to-customize
+
+#    define POINTING_DEVICE_AUTO_MOUSE_ENABLE
+// only required if not setting mouse layer elsewhere
+#    define AUTO_MOUSE_DEFAULT_LAYER 5
+//#    define AUTO_MOUSE_TIME 100 // default would be 650ms
+//#    define AUTO_MOUSE_DELAY 5  // default would be 100ms
+//#    define AUTO_MOUSE_DEBOUNCE 15  // default would be 25ms
+#    define AUTO_MOUSE_THRESHOLD 10  // default is 10
+
+// ******** taken from Rikiki end ********
 
 #endif
 
@@ -35,7 +67,7 @@
 #    define TAPPING_TOGGLE 2
 #endif
 
-#define ENCODER_RESOLUTION 6
+#define ENCODER_RESOLUTION 8
 
 #ifdef RGBLIGHT_ENABLE
 #    define RGBLIGHT_EFFECT_BREATHING
