@@ -395,7 +395,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case M_CHARAMAP: // opens character map app
             if (record->event.pressed) {
-                //SEND_STRING(SS_TAP(X_LGUI) "character map" SS_TAP(KC_ENT));
+                SEND_STRING(SS_TAP(X_LGUI) SS_DELAY(10) "character map" SS_DELAY(250) SS_TAP(X_ENT));
             }
             break;
 
@@ -487,28 +487,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
  * |  TAB   |   A  |   R  |   S  |   T  |   D  |                              |   H  |   N  |   E  |   I  |   O  |   ^ °  |
  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
- * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TTMOUS|LEADER|   K  |   M  | , ;  | . :  | - _  | MO NUM |
+ * |  LGUI  |   Z  |   X  |   C  |   V  |   B  | RAlt |TT NAV|  |TTMOUS| LAlt |   K  |   M  | , ;  | . :  | - _  | MO NUM |
  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
- *                        | LAlt | LCtrl| Enter| tap /| MO   |  | RShft|Bckspc| Space| RCtrl|CapsW |
+ *                        |Leader| LCtrl| Enter| tap /| MO   |  | RShft|Bckspc| Space| RCtrl|CapsW |
  *                        |      |      | LShft|hold #| SPEC |  |      |      |      |      |CapLck|
  *                        `----------------------------------'  `----------------------------------'
  */
     [_COLEMAK] = LAYOUT(
      KC_ESC  , KC_Q ,  KC_W   ,  KC_F  ,   KC_P ,   KC_G ,                                        KC_J,   KC_L ,  KC_U ,   DE_Y ,TD(EMOJI),TD(LOCK),
      KC_TAB  , KC_A ,  KC_R   ,  KC_S  ,   KC_T ,   KC_D ,                                        KC_H,   KC_N ,  KC_E ,   KC_I ,KC_O   ,DE_CIRC ,
-     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TT(MOU), QK_LEAD, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
-                        KC_LALT, KC_LCTL,SFT_T(KC_ENT),TD(HA_SLA),MO(SPEC),   KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
+     KC_LGUI,TD(Z_PRINT),KC_X ,  KC_C  ,   KC_V ,   KC_B , KC_ALGR,TT(NAV),      TT(MOU),KC_LALT, KC_K,   KC_M ,DE_COMM, DE_DOT ,DE_MINS, TT(NUM),
+                       QK_LEAD, KC_LCTL,SFT_T(KC_ENT),TD(HA_SLA),MO(SPEC),       KC_RSFT,KC_BSPC,KC_SPC,KC_RCTL, TD(CAPS_CW)
     ),
 
   /*
+  * 
   * SPECIAL
   *
   * ,-------------------------------------------.                              ,-------------------------------------------.
-  * |  TRAN  |  @   |      |  "   |  [   |  !   |                              |  ´   |  ]   |  Ù Ü |      |      |        |
+  * |  TRAN  |  @   | TRAN |  "   |  [   |  !   |                              |  ´   |  ]   |  Ù Ü | TRAN | TRAN |  TRAN  |
   * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
-  * |  TRAN  | À Ä  |      |  ß   |  (   |  ?   |                              |  `   |  )   |   È  |   Ì  |  Ò Ö |        |
+  * |  TRAN  | À Ä  | TRAN |  ß   |  (   |  ?   |                              |  `   |  )   |   È  |   Ì  |  Ò Ö |  TRAN  |
   * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
-  * |  TRAN  |  |   |   ð  |   ñ  |  {   |  =   | TRAN | TRAN |  | TRAN | TRAN |  \   |  }   |   ;  |   :  |      |  TRAN  |
+  * |  TRAN  |  |   |   ð  |   ñ  |  {   |  =   | TRAN | TRAN |  | TRAN | TRAN |  \   |  }   |   ;  |   :  | TRAN |  TRAN  |
   * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
   *                        | TRAN | TRAN | TRAN | TRAN | TRAN |  | TRAN | TRAN | TRAN | TRAN | TRAN |
   *                        |      |      |      |      |      |  |      |      |      |      |      |
@@ -536,9 +537,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   *                        `----------------------------------'  `----------------------------------'
   */
      [_NUM] = LAYOUT(
-       KC_TRNS, _______, DE_7   , DE_8   , DE_9   , _______,                                     _______, _______, _______, _______, _______, _______,
-       KC_TRNS, DE_0   , DE_4   , DE_5   , DE_6   , DE_DOT ,                                     _______, DE_PLUS, DE_MINS, _______, _______, _______,
-       KC_TRNS, _______, DE_1   , DE_2   , DE_3   , DE_COMM, KC_TRNS,TO(CLMK),KC_TRNS,KC_TRNS,_______, DE_ASTR, DE_SLSH, _______, _______, _______,
+       KC_TRNS, XXXXXXX, DE_7   , DE_8   , DE_9   , XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, DE_0   , DE_4   , DE_5   , DE_6   , DE_DOT ,                                     XXXXXXX, DE_PLUS, DE_MINS, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, XXXXXXX, DE_1   , DE_2   , DE_3   , DE_COMM, KC_TRNS,TO(CLMK),KC_TRNS,  KC_TRNS, XXXXXXX, DE_ASTR, DE_SLSH, XXXXXXX, XXXXXXX, XXXXXXX,
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
@@ -557,9 +558,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   *                        `----------------------------------'  `----------------------------------'
  */
     [_NAV] = LAYOUT(
-       KC_TRNS, _______, KC_F7  , KC_F8  , KC_F9  , KC_F12 ,                                     KC_INS , KC_HOME,  KC_UP , KC_END , KC_PGUP, KC_AUDIO_VOL_UP,
-       KC_TRNS, _______, KC_F4  , KC_F5  , KC_F6  , KC_F11 ,                                     KC_DEL , KC_LEFT, KC_DOWN,KC_RIGHT, KC_PGDN, KC_AUDIO_VOL_DOWN,
-       KC_TRNS, _______, KC_F1  , KC_F2  , KC_F3  , KC_F10 , KC_TRNS,TO(CLMK),KC_TRNS,KC_TRNS,KC_PSCR,KC_CALCULATOR, _______, _______, _______, KC_AUDIO_MUTE,
+       KC_TRNS, XXXXXXX, KC_F7  , KC_F8  , KC_F9  , KC_F12 ,                                     KC_INS , KC_HOME,  KC_UP , KC_END , KC_PGUP, KC_AUDIO_VOL_UP,
+       KC_TRNS, XXXXXXX, KC_F4  , KC_F5  , KC_F6  , KC_F11 ,                                     KC_DEL , KC_LEFT, KC_DOWN,KC_RIGHT, KC_PGDN, KC_AUDIO_VOL_DOWN,
+       KC_TRNS, XXXXXXX, KC_F1  , KC_F2  , KC_F3  , KC_F10 , KC_TRNS,TO(CLMK),KC_TRNS,KC_TRNS,KC_PSCR,KC_CALCULATOR, XXXXXXX, XXXXXXX, XXXXXXX, KC_AUDIO_MUTE,
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 
@@ -578,9 +579,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   *                        `----------------------------------'  `----------------------------------'
   */
      [_MOUSE] = LAYOUT(
-       KC_TRNS, _______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______, _______,
-       KC_TRNS, _______, MS_BTN2, MS_BTN3, MS_BTN1, _______,                                     _______, _______, _______, _______, _______, _______,
-       KC_TRNS, _______, _______, _______, _______, _______, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, _______, _______, _______, _______, _______, _______,
+       KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, XXXXXXX, MS_BTN2, MS_BTN3, MS_BTN1, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
@@ -640,7 +641,6 @@ bool encoder_update_user(uint8_t index, bool clockwise)
 #endif
 
 // TODO
-// - fix tap dances
 // - mouse scroll
 // - leader key behaviour
 // - charamap macro
