@@ -65,7 +65,7 @@ Applies to both Pointing Device and Mousekeys.*/
 #    define TAPPING_TOGGLE 2
 #endif
 
-#define ENCODER_RESOLUTION 8
+#define ENCODER_RESOLUTION 6
 
 #ifdef RGBLIGHT_ENABLE
 #    define RGBLIGHT_EFFECT_BREATHING
