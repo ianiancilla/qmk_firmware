@@ -94,6 +94,41 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
 #endif
 
+// ************* LEADER *************
+#ifndef LEADER
+
+void leader_start_user(void) {
+    // Do something when the leader key is pressed
+}
+
+void leader_end_user(void) {
+    if (leader_sequence_three_keys(KC_C, KC_H, KC_A)) {
+        // Leader, cha => opens character map
+        SEND_STRING(SS_TAP(X_LGUI) SS_DELAY(10) "character map" SS_DELAY(250) SS_TAP(X_ENT));
+    } else if (leader_sequence_three_keys(KC_C, KC_A, KC_L)) {
+        SEND_STRING(SS_TAP(X_LGUI) SS_DELAY(10) "calc" SS_DELAY(250) SS_TAP(X_ENT));
+    } else if (leader_sequence_two_keys(KC_M, KC_A)) {
+        SEND_STRING("marzia.faustinelli@googlemail.com");
+    }
+
+    //if (leader_sequence_one_key(KC_F)) {
+    //    // Leader, f => Types the below string
+    //    SEND_STRING("QMK is awesome.");
+    //} else if (leader_sequence_two_keys(KC_D, KC_D)) {
+    //    // Leader, d, d => Ctrl+A, Ctrl+C
+    //    SEND_STRING(SS_LCTL("a") SS_LCTL("c"));
+    //} else if (leader_sequence_three_keys(KC_D, KC_D, KC_S)) {
+    //    // Leader, d, d, s => Types the below string
+    //    SEND_STRING("https://start.duckduckgo.com\n");
+    //} else if (leader_sequence_two_keys(KC_A, KC_S)) {
+    //    // Leader, a, s => GUI+S
+    //    tap_code16(LGUI(KC_S));
+    //}
+}
+
+#endif
+
+
 
 // ************* TAP DANCE AND MACROS************* 
 #ifndef TAP_DANCE_AND_MACRO
@@ -321,6 +356,8 @@ typedef struct {
 #define ACTION_TAP_SPECIAL(tap_key1, tap_key2, hold) \
         { .fn = {NULL, spec_tap_hold_finished, spec_tap_hold_reset}, .user_data = (void *)&((accent_tap_hold_t){tap_key1, tap_key2, hold, 0}), }
 
+// modified the accents functions, as they had strang behaviour when holding the key. Simple tap_codes seem more natural,
+// but still need some testing.
 void spec_tap_hold_finished(tap_dance_state_t *state, void *user_data) {
     accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)user_data;
 
@@ -330,28 +367,31 @@ void spec_tap_hold_finished(tap_dance_state_t *state, void *user_data) {
             && !state->interrupted
 #    endif
         ) {
-            register_code16(tap_hold->hold);
-            tap_hold->held1 = tap_hold->hold;
+            tap_code16(tap_hold->hold);
+            //register_code16(tap_hold->hold);
+            //tap_hold->held1 = tap_hold->hold;
         } else {
-            register_code16(tap_hold->tap_key1);
-            register_code16(tap_hold->tap_key2);
-            tap_hold->held1 = tap_hold->tap_key1;
-            tap_hold->held2 = tap_hold->tap_key2;
+            tap_code16(tap_hold->tap_key1);
+            tap_code16(tap_hold->tap_key2);
+            //register_code16(tap_hold->tap_key1);
+            //register_code16(tap_hold->tap_key2);
+            //tap_hold->held1 = tap_hold->tap_key1;
+            //tap_hold->held2 = tap_hold->tap_key2;
         }
     }
 }
 
 void spec_tap_hold_reset(tap_dance_state_t *state, void *user_data) {
-    accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)user_data;
-
-    if (tap_hold->held1) {
-        unregister_code16(tap_hold->held1);
-        tap_hold->held1 = 0;
-    }
-    if (tap_hold->held2) {
-        unregister_code16(tap_hold->held2);
-        tap_hold->held2 = 0;
-    }
+    //accent_tap_hold_t *tap_hold = (accent_tap_hold_t *)user_data;
+    //
+    //if (tap_hold->held1) {
+    //    unregister_code16(tap_hold->held1);
+    //    tap_hold->held1 = 0;
+    //}
+    //if (tap_hold->held2) {
+    //    unregister_code16(tap_hold->held2);
+    //    tap_hold->held2 = 0;
+    //}
 }
 
 void emoji_finished(tap_dance_state_t *state, void *user_data) {
@@ -731,18 +771,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   * ,-------------------------------------------.                              ,-------------------------------------------.
   * | TRAN   | BLITZ|      |      |      |      |                              |      |      |      |      | DPI+ |        |
   * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
-  * | TRAN   | SNIPE|RCLICK|MCLICK|LCLICK|      |                              |      |      |      |      |DPIres|        |
+  * | TRAN   | SNIPE|SCROLL|RCLICK|LCLICK|      |                              |      |      |      |      |DPIres|        |
   * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
-  * | TRAN   |      |      |      |      |      | TRAN | TRAN |  | TRAN | TRAN |      |      |      |      | DPI- |        |
+  * | TRAN   |      |      |      |MCLICK|      | TRAN | TRAN |  | TRAN | TRAN |      |      |      |      | DPI- |        |
   * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
   *                        | TRAN | TRAN | TRAN |SCROLL| TRAN |  | TRAN | TRAN | TRAN | TRAN | TRAN |
-  *                        |      |      |      |      |      |  |      |      |      |      |      |
+  *                        |      |      |      |      |      |  |      |      |      |      |
+  * 
   *                        `----------------------------------'  `----------------------------------'
   */
      [_AUTO_MOUSE] = LAYOUT(
        KC_TRNS, M_BLITZ, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_INC, XXXXXXX,
-       KC_TRNS, M_SNIPE,M_SCROLL, MS_BTN3, MS_BTN1, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_RESET, XXXXXXX,
-       KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_DEC, XXXXXXX,
+       KC_TRNS, M_SNIPE,M_SCROLL, MS_BTN2, MS_BTN1, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_RESET, XXXXXXX,
+       KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, MS_BTN3, XXXXXXX, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_DEC, XXXXXXX,
                                   KC_TRNS, KC_TRNS, KC_TRNS, M_SCROLL, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
@@ -803,5 +844,5 @@ bool encoder_update_user(uint8_t index, bool clockwise)
 
 
 // TODO
-// - leader key behaviour
+// - tap-hold for tab, so when held it alt-tabs?o
 //

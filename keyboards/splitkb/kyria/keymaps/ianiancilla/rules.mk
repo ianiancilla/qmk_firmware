@@ -14,3 +14,6 @@ ENCODER_ENABLE = yes
 # trackpad
 POINTING_DEVICE_ENABLE = yes
 POINTING_DEVICE_DRIVER = cirque_pinnacle_i2c
+
+# leader key
+LEADER_ENABLE = yes

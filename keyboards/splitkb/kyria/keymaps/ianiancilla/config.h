@@ -30,7 +30,7 @@
 
 
 #    define CIRQUE_PINNACLE_POSITION_MODE CIRQUE_PINNACLE_RELATIVE_MODE
-#    define CIRQUE_PINNACLE_TAP_ENABLE  //might give problems with auto-mouse
+//#    define CIRQUE_PINNACLE_TAP_ENABLE  //might give problems with auto-mouse
 //#    define CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE  //never managed to make this work anyway
 //#    define POINTING_DEVICE_GESTURES_SCROLL_ENABLE  //might give problems with auto-mouse
 
@@ -43,7 +43,6 @@
 which may allow for smoother reporting, and prevent maxing out of the reports.
 Applies to both Pointing Device and Mousekeys.*/
 #    define MOUSE_EXTENDED_REPORT  // Enables support for extended i16 mouse reports (instead of i8).
-
 #    define POINTING_DEVICE_TASK_THROTTLE_MS 10 // Limits the frequency that the sensor is polled for motion.
 
 // MOUSE AUTO-LAYER
@@ -52,11 +51,10 @@ Applies to both Pointing Device and Mousekeys.*/
 #    define POINTING_DEVICE_AUTO_MOUSE_ENABLE
 // only required if not setting mouse layer elsewhere
 #    define AUTO_MOUSE_DEFAULT_LAYER 5
-//#    define AUTO_MOUSE_TIME 100 // default would be 650ms
-//#    define AUTO_MOUSE_DELAY 5  // default would be 100ms
-//#    define AUTO_MOUSE_DEBOUNCE 15  // default would be 25ms
-#    define AUTO_MOUSE_THRESHOLD 10  // default is 10
-
+#    define AUTO_MOUSE_TIME 1000 // default would be 650ms
+#    define AUTO_MOUSE_DELAY 100  // default would be 100ms
+#    define AUTO_MOUSE_DEBOUNCE 25  // default would be 25ms
+#    define AUTO_MOUSE_THRESHOLD 0  // default is 10
 // ******** taken from Rikiki end ********
 
 #endif
@@ -88,3 +86,6 @@ Applies to both Pointing Device and Mousekeys.*/
 #    endif
 #endif
 
+#ifdef LEADER_ENABLE
+#   define LEADER_TIMEOUT 800   
+#endif
