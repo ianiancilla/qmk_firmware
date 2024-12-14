@@ -47,8 +47,8 @@ enum layers {
 // ------------ For 40mm TRACKPAD ---------------
 float aux_dpi = 0;
 float default_dpi = 0;
-float blitz_modifier = 800;
-float snipe_modifier = -350;
+float blitz_modifier = 900;
+float snipe_modifier = -450;
 
 // Modify these values to adjust the scrolling speed
 #    define SCROLL_DIVISOR_H_BASE 26.0 // Horizontal scroll speed

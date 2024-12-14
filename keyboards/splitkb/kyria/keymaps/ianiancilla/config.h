@@ -28,19 +28,23 @@
 
 #    define CIRQUE_PINNACLE_ATTENUATION EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_4X //was 2X before
 
+#    define CIRQUE_PINNACLE_POSITION_MODE CIRQUE_PINNACLE_ABSOLUTE_MODE
+//#    define CIRQUE_PINNACLE_POSITION_MODE CIRQUE_PINNACLE_RELATIVE_MODE
 
-#    define CIRQUE_PINNACLE_POSITION_MODE CIRQUE_PINNACLE_RELATIVE_MODE
+#    define POINTING_DEVICE_GESTURES_CURSOR_GLIDE_ENABLE  // only works in absolute mode
+#    define POINTING_DEVICE_GESTURES_CURSOR_GLIDE_COEFF 110 // extracted by iani, default 102.
+                                                            // coefficient of kinetic friction on gliding cursor
+                                                            
 //#    define CIRQUE_PINNACLE_TAP_ENABLE  //might give problems with auto-mouse
+//#    define POINTING_DEVICE_GESTURES_SCROLL_ENABLE // might give problems with auto-mouse
+
+// following only work in relative mode:
 //#    define CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE  //never managed to make this work anyway
-//#    define POINTING_DEVICE_GESTURES_SCROLL_ENABLE  //might give problems with auto-mouse
 
 
 // ******** taken from Rikiki: ********
 #    define DEBOUNCE 8 // added debounce to prevent the trackpad occasionally teleporting
 #    define POINTING_DEVICE_CIRQUE_PINNACLE_DPI 4200 // change DPI to what is more comfortable
-
-// cursor glide function, to flick for extended scroll
-#    define POINTING_DEVICE_GESTURES_CURSOR_GLIDE_ENABLE
 
 /*Enables support for extended reports (-32767 to 32767, instead of -127 to 127),
 which may allow for smoother reporting, and prevent maxing out of the reports.

@@ -18,6 +18,12 @@
 #include <stdint.h>
 #include "report.h"
 
+/* check settings and set defaults */
+#ifndef POINTING_DEVICE_GESTURES_CURSOR_GLIDE_COEFF
+#    define POINTING_DEVICE_GESTURES_CURSOR_GLIDE_COEFF 102
+#endif
+
+
 #ifdef POINTING_DEVICE_GESTURES_CURSOR_GLIDE_ENABLE
 typedef struct {
     mouse_xy_report_t dx;
