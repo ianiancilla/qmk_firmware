@@ -45,8 +45,12 @@ enum layers {
 
 //           SCROLLING WITH TRACKPAD
 // ------------ For 40mm TRACKPAD ---------------
-// Modify these values to adjust the scrolling speed
 float aux_dpi = 0;
+float default_dpi = 0;
+float blitz_modifier = 800;
+float snipe_modifier = -350;
+
+// Modify these values to adjust the scrolling speed
 #    define SCROLL_DIVISOR_H_BASE 26.0 // Horizontal scroll speed
 #    define SCROLL_DIVISOR_V_BASE 13.0 // Vertical scroll speed
 
@@ -92,7 +96,13 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     return mouse_report;
 }
 
+// at keyboard initialisation, check the set DPI and set it as default
+void keyboard_post_init_user(void) {
+    default_dpi = pointing_device_get_cpi();
+}
 #endif
+
+
 
 // ************* LEADER *************
 #ifndef LEADER
@@ -102,10 +112,10 @@ void leader_start_user(void) {
 }
 
 void leader_end_user(void) {
-    if (leader_sequence_three_keys(KC_C, KC_H, KC_A)) {
+    if (leader_sequence_two_keys(KC_C, KC_H)) {
         // Leader, cha => opens character map
         SEND_STRING(SS_TAP(X_LGUI) SS_DELAY(10) "character map" SS_DELAY(250) SS_TAP(X_ENT));
-    } else if (leader_sequence_three_keys(KC_C, KC_A, KC_L)) {
+    } else if (leader_sequence_two_keys(KC_C, KC_A)) {
         SEND_STRING(SS_TAP(X_LGUI) SS_DELAY(10) "calc" SS_DELAY(250) SS_TAP(X_ENT));
     } else if (leader_sequence_two_keys(KC_M, KC_A)) {
         SEND_STRING("marzia.faustinelli@googlemail.com");
@@ -315,7 +325,7 @@ void capscw_reset(tap_dance_state_t *state, void *user_data) {
     capscw_tap_state.state = TD_NONE;
 }
 
-//// LOCK tap dance
+// LOCK tap dance
 static tap_dance_multi_tap_t lock_tap_state = {.is_press_action = true, .state = TD_NONE};
 
 void lock_finished(tap_dance_state_t *state, void *user_data) {
@@ -548,7 +558,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case M_DPI_RESET: // Resets trackpad DPI
             if (record->event.pressed) {
-                pointing_device_set_cpi(4200);
+                pointing_device_set_cpi(default_dpi);
             }
             break;
 
@@ -557,7 +567,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 if (set_scrolling) {
                     aux_dpi = pointing_device_get_cpi();
-                    pointing_device_set_cpi(200);
+                    pointing_device_set_cpi(aux_dpi + snipe_modifier);
                     scroll_divisor_h = SCROLL_DIVISOR_H_BASE * 2.0;
                     scroll_divisor_v = SCROLL_DIVISOR_V_BASE * 2.0;
                 } else {
@@ -579,7 +589,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (set_scrolling) {
                 if (record->event.pressed) {
                     aux_dpi = pointing_device_get_cpi();
-                    pointing_device_set_cpi(1000);
+                    pointing_device_set_cpi(aux_dpi + blitz_modifier);
                     scroll_divisor_h = SCROLL_DIVISOR_H_BASE / 2.0;
                     scroll_divisor_v = SCROLL_DIVISOR_V_BASE / 2.0;
                 } else {
@@ -609,6 +619,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 };
 
 #endif
+
 
 
 // ************* COMBOS *************
@@ -653,6 +664,8 @@ combo_t key_combos[] = {
     [CB_SPACE] = COMBO(cv_combo, KC_SPC)
 };
 #endif
+
+
 
 // ************* LAYERS *************
 #ifndef LAYER_MAP
@@ -710,7 +723,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
   * |  TRAN  | 0 =  |  4 $ |  5 % |  6 & | . :  |                              |      |  +   |   -  |      |      |        |
   * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
-  * |  TRAN  |      |  1 ! |  2 " |  3 § | , ;  | TRAN |COLEMK|  | TRAN | TRAN |      |  *   |   /  |      |      |        |
+  * |  TRAN  |      |  1 ! |  2 " |  3 § | , ;  | TRAN |COLEMK|  | TRAN | TRAN |      |  *   |   /  |      |      |COLEMAK |
   * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
   *                        | TRAN | TRAN | TRAN | TRAN | TRAN |  | TRAN | TRAN | TRAN | TRAN | TRAN |
   *                        |      |      |      |      |      |  |      |      |      |      |      |
@@ -719,7 +732,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      [_NUM] = LAYOUT(
        KC_TRNS, XXXXXXX, DE_7   , DE_8   , DE_9   , XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
        KC_TRNS, DE_0   , DE_4   , DE_5   , DE_6   , DE_DOT ,                                     XXXXXXX, DE_PLUS, DE_MINS, XXXXXXX, XXXXXXX, XXXXXXX,
-       KC_TRNS, XXXXXXX, DE_1   , DE_2   , DE_3   , DE_COMM, KC_TRNS,TO(CLMK),KC_TRNS,  KC_TRNS, XXXXXXX, DE_ASTR, DE_SLSH, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, XXXXXXX, DE_1   , DE_2   , DE_3   , DE_COMM, KC_TRNS,TO(CLMK),KC_TRNS,  KC_TRNS, XXXXXXX, DE_ASTR, DE_SLSH, XXXXXXX, XXXXXXX, TO(CLMK),
                                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
@@ -769,11 +782,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   * Auto-Mouse layer
   *
   * ,-------------------------------------------.                              ,-------------------------------------------.
-  * | TRAN   | BLITZ|      |      |      |      |                              |      |      |      |      | DPI+ |        |
+  * | TRAN   | DPI+ |      |      |      |      |                              |      |      |      |      |      |        |
   * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
-  * | TRAN   | SNIPE|SCROLL|RCLICK|LCLICK|      |                              |      |      |      |      |DPIres|        |
+  * | TRAN   |DPIres|SCROLL|RCLICK|LCLICK|SNIPE |                              |      |      |      |      |      |        |
   * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
-  * | TRAN   |      |      |      |MCLICK|      | TRAN | TRAN |  | TRAN | TRAN |      |      |      |      | DPI- |        |
+  * | TRAN   | DPI- |      |      |MCLICK|BLITZ | TRAN | TRAN |  | TRAN | TRAN |      |      |      |      |      |        |
   * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
   *                        | TRAN | TRAN | TRAN |SCROLL| TRAN |  | TRAN | TRAN | TRAN | TRAN | TRAN |
   *                        |      |      |      |      |      |  |      |      |      |      |
@@ -781,10 +794,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   *                        `----------------------------------'  `----------------------------------'
   */
      [_AUTO_MOUSE] = LAYOUT(
-       KC_TRNS, M_BLITZ, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_INC, XXXXXXX,
-       KC_TRNS, M_SNIPE,M_SCROLL, MS_BTN2, MS_BTN1, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_RESET, XXXXXXX,
-       KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, MS_BTN3, XXXXXXX, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, M_DPI_DEC, XXXXXXX,
-                                  KC_TRNS, KC_TRNS, KC_TRNS, M_SCROLL, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+       KC_TRNS, M_DPI_INC,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, M_DPI_RESET,M_SCROLL, MS_BTN2, MS_BTN1, M_SNIPE,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       KC_TRNS, M_DPI_DEC,   XXXXXXX, XXXXXXX, MS_BTN3, M_BLITZ, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+                                      KC_TRNS, KC_TRNS, KC_TRNS, M_SCROLL, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
      ),
 
 // /*
@@ -809,6 +822,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //     ),
 };
 #endif
+
+
 
 // ************* ENCODER *************
 #ifndef ENCODER
@@ -843,6 +858,7 @@ bool encoder_update_user(uint8_t index, bool clockwise)
 #endif
 
 
+
 // TODO
-// - tap-hold for tab, so when held it alt-tabs?o
+// - tap-hold for tab, so when held it alt-tabs?
 //
