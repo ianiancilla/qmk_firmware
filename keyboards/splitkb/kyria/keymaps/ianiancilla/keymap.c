@@ -636,6 +636,8 @@ enum combos {
     CB_TM, // types ™
     CB_MUTE, // mutes audio
     CB_SPACE, // presses SPACEBAR
+    CB_ENTER,      // presses ENTER
+
 };
 
 
@@ -649,6 +651,8 @@ const uint16_t PROGMEM hn_combo[] = {KC_H, KC_N, COMBO_END};
 const uint16_t PROGMEM tm_combo[] = {KC_T, KC_M, COMBO_END};
 const uint16_t PROGMEM wfp_combo[] = {KC_W, KC_F, KC_P, COMBO_END};
 const uint16_t PROGMEM cv_combo[]  = {KC_C, KC_V, COMBO_END};
+const uint16_t PROGMEM mcomma_combo[] = {KC_M, DE_COMM, COMBO_END};
+
 
 
 combo_t key_combos[] = {
@@ -661,7 +665,9 @@ combo_t key_combos[] = {
     [CB_ACUTE_E] = COMBO(hn_combo, M_EACUTE),
     [CB_TM]      = COMBO(tm_combo, M_TM),
     [CB_MUTE] = COMBO(wfp_combo, KC_AUDIO_MUTE),
-    [CB_SPACE] = COMBO(cv_combo, KC_SPC)
+    [CB_SPACE] = COMBO(cv_combo, KC_SPC),
+    [CB_ENTER] = COMBO(mcomma_combo, KC_ENT)
+
 };
 #endif
 
